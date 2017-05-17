@@ -19,6 +19,13 @@
 
     <mvc:annotation-driven conversion-service="conversionService"/>
 
+    <mvc:interceptors>
+        <mvc:interceptor>
+            <mvc:mapping path="/**"/>
+            <bean id="SessionInterceptor" class="org.whiteboard.server.session.SessionInterceptor"></bean>
+        </mvc:interceptor>
+    </mvc:interceptors>
+
     <bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter">
         <property name="messageConverters">
             <list>
@@ -68,4 +75,5 @@
             </set>
         </property>
     </bean>
+
 </beans>
