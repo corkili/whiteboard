@@ -3,7 +3,9 @@ package org.whiteboard.server.model;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by 李浩然 on 2017/5/15.
@@ -28,11 +30,14 @@ public class Meeting {
     @Column(name = "meeting_room_id")
     private int MeetingRoomId;
 
-    public Meeting() {
+    private List<Long> partnerIds;
 
+    public Meeting() {
+        this.partnerIds = new ArrayList<>();
     }
 
-    public Meeting(long meetingId, String meetingName, int partnerNumber, long organizerId, Date startTime, Date endTime, String notePath, int meetingRoomId) {
+    public Meeting(long meetingId, String meetingName, int partnerNumber, long organizerId, Date startTime,
+                   Date endTime, String notePath, int meetingRoomId, List<Long> partnerIds) {
         this.meetingId = meetingId;
         this.meetingName = meetingName;
         this.partnerNumber = partnerNumber;
@@ -41,6 +46,7 @@ public class Meeting {
         this.endTime = endTime;
         this.notePath = notePath;
         MeetingRoomId = meetingRoomId;
+        this.partnerIds = partnerIds;
     }
 
     public long getMeetingId() {
@@ -105,5 +111,24 @@ public class Meeting {
 
     public void setMeetingRoomId(int meetingRoomId) {
         MeetingRoomId = meetingRoomId;
+    }
+
+    public List<Long> getPartnerIds() {
+        return partnerIds;
+    }
+
+    public void setPartnerIds(List<Long> partnerIds) {
+        this.partnerIds = partnerIds;
+    }
+
+    public void addPartner(long partnerId) {
+        partnerIds.add(partnerId);
+        partnerNumber++;
+    }
+
+    public void removePartner(long partnerId) {
+        if(partnerIds.remove(partnerId)) {
+            partnerNumber--;
+        }
     }
 }

@@ -1,5 +1,7 @@
 package org.whiteboard.server.model;
 
+import net.sf.json.JSONObject;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
@@ -82,5 +84,14 @@ public class User {
 
     public void setHeadImage(String headImage) {
         this.headImage = headImage;
+    }
+
+    public String toJSONString() {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("user_id", userId);
+        jsonObject.put("username", username);
+        jsonObject.put("password", password);
+        jsonObject.put("phone_number", phoneNumber);
+        return jsonObject.toString();
     }
 }

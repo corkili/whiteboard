@@ -29,5 +29,6 @@
     <orderEntry type="library" exported="" name="spring-4.3.7" level="application" />
     <orderEntry type="library" exported="" name="tomcat-8.0.32" level="application" />
     <orderEntry type="library" exported="" name="jackson-2.8.2" level="application" />
+    <orderEntry type="library" exported="" name="json" level="application" />
   </component>
 </module>
