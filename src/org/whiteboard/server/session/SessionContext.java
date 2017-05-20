@@ -9,6 +9,7 @@ import java.util.Map;
  */
 public class SessionContext {
     public static final String ATTR_USER_ID = "userId";
+    public static final String ATTR_ROOM_ID = "roomId";
 
     private static SessionContext instance;
     private Map<String, HttpSession> sessionMap;

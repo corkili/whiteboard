@@ -1,5 +1,9 @@
 package org.whiteboard.server.model;
 
+import com.sun.xml.internal.bind.v2.model.core.ID;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
@@ -28,16 +32,19 @@ public class Meeting {
     @Column(name = "note_path")
     private String notePath;
     @Column(name = "meeting_room_id")
-    private int MeetingRoomId;
+    private int meetingRoomId;
 
     private List<Long> partnerIds;
+    private int maxPartnerNumber;
+    private boolean isStarted;
+    private String roomPassword;
 
     public Meeting() {
         this.partnerIds = new ArrayList<>();
     }
 
-    public Meeting(long meetingId, String meetingName, int partnerNumber, long organizerId, Date startTime,
-                   Date endTime, String notePath, int meetingRoomId, List<Long> partnerIds) {
+    public Meeting(long meetingId, String meetingName, int partnerNumber, long organizerId,
+                   Date startTime, Date endTime, String notePath, int meetingRoomId) {
         this.meetingId = meetingId;
         this.meetingName = meetingName;
         this.partnerNumber = partnerNumber;
@@ -45,8 +52,24 @@ public class Meeting {
         this.startTime = startTime;
         this.endTime = endTime;
         this.notePath = notePath;
-        MeetingRoomId = meetingRoomId;
+        this.meetingRoomId = meetingRoomId;
+        isStarted = false;
+    }
+
+    public Meeting(long meetingId, String meetingName, int partnerNumber, long organizerId, Date startTime, Date endTime,
+                   String notePath, int meetingRoomId, List<Long> partnerIds, int maxPartnerNumber, String roomPassword) {
+        this.meetingId = meetingId;
+        this.meetingName = meetingName;
+        this.partnerNumber = partnerNumber;
+        this.organizerId = organizerId;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.notePath = notePath;
+        this.meetingRoomId = meetingRoomId;
         this.partnerIds = partnerIds;
+        this.maxPartnerNumber = maxPartnerNumber;
+        this.roomPassword = roomPassword;
+        isStarted = false;
     }
 
     public long getMeetingId() {
@@ -106,11 +129,11 @@ public class Meeting {
     }
 
     public int getMeetingRoomId() {
-        return MeetingRoomId;
+        return meetingRoomId;
     }
 
     public void setMeetingRoomId(int meetingRoomId) {
-        MeetingRoomId = meetingRoomId;
+        this.meetingRoomId = meetingRoomId;
     }
 
     public List<Long> getPartnerIds() {
@@ -121,14 +144,56 @@ public class Meeting {
         this.partnerIds = partnerIds;
     }
 
-    public void addPartner(long partnerId) {
-        partnerIds.add(partnerId);
-        partnerNumber++;
+    public boolean addPartner(long partnerId) {
+        if (partnerNumber < maxPartnerNumber && !isPartner(partnerId)) {
+            partnerIds.add(partnerId);
+            partnerNumber++;
+            return true;
+        } else {
+            return false;
+        }
     }
 
-    public void removePartner(long partnerId) {
-        if(partnerIds.remove(partnerId)) {
+    public boolean removePartner(long partnerId) {
+        if (isPartner(partnerId)) {
+            partnerIds.remove(partnerId);
             partnerNumber--;
+            return true;
+        } else {
+            return false;
         }
+    }
+
+    public int getMaxPartnerNumber() {
+        return maxPartnerNumber;
+    }
+
+    public void setMaxPartnerNumber(int maxPartnerNumber) {
+        this.maxPartnerNumber = maxPartnerNumber;
+    }
+
+    public boolean isStarted() {
+        return isStarted;
+    }
+
+    public void setStarted(boolean started) {
+        isStarted = started;
+    }
+
+    public boolean isPartner(long userId) {
+        for (long id : partnerIds) {
+            if (id == userId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public String getRoomPassword() {
+        return roomPassword;
+    }
+
+    public void setRoomPassword(String roomPassword) {
+        this.roomPassword = roomPassword;
     }
 }

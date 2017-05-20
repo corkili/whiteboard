@@ -9,6 +9,7 @@ import org.whiteboard.server.model.Meeting;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -44,6 +45,28 @@ public class MeetingDaoImpl implements MeetingDao {
     }
 
     @Override
+    public Meeting findMeetingByOrganizerAndStartTime(long organizerId, Date startTime) {
+        Meeting meeting = null;
+        String sql = getSqlForSelectMeeting(COL_ORGANIZER_ID, COL_START_TIME);
+        try {
+            RowMapper<Meeting> rowMapper = BeanPropertyRowMapper.newInstance(Meeting.class);
+            meeting = jdbcTemplate.queryForObject(sql, new Object[]{ organizerId, dateFormat.format(startTime) }, rowMapper);
+            if(meeting != null) {
+                List<Long> partnerIds = findUserIdsByMeetingId(meeting.getMeetingId());
+                if (partnerIds.size() == meeting.getPartnerNumber()) {
+                    meeting.setPartnerIds(partnerIds);
+                } else {    // 信息不匹配
+                    meeting = null;
+                }
+            }
+        } catch (Exception e) {
+            // do nothing
+        }
+        return meeting;
+    }
+
+
+    @Override
     public List<Long> findMeetingIdsByUserId(long userId) {
         List<Long> meetingIds = null;
         String sql = getSqlForSelectMeetingIds(UserDao.COL_USER_ID);
@@ -76,10 +99,11 @@ public class MeetingDaoImpl implements MeetingDao {
     }
 
     @Override
-    public void addMeetingToDB(Meeting meeting) {
+    public Meeting addMeetingToDB(Meeting meeting) {
+        Meeting tMeeting = null;
         if(jdbcTemplate.update(getSqlForInsertMeeting(),
                 getParamsForInsertMeeting(meeting)) == 1) {
-            meeting = jdbcTemplate.queryForObject(getSqlForSelectMeeting(COL_ORGANIZER_ID, COL_START_TIME),
+            tMeeting = jdbcTemplate.queryForObject(getSqlForSelectMeeting(COL_ORGANIZER_ID, COL_START_TIME),
                     new Object[]{ meeting.getOrganizerId(), dateFormat.format(meeting.getStartTime()) },
                     BeanPropertyRowMapper.newInstance(Meeting.class));
             List<Object[]> batchArgs = new ArrayList<>();
@@ -89,10 +113,13 @@ public class MeetingDaoImpl implements MeetingDao {
             }
             if (batchArgs.size() == meeting.getPartnerNumber()) {
                 jdbcTemplate.batchUpdate(getSqlForInsertParticipate(), batchArgs);
+                tMeeting = findMeetingById(tMeeting.getMeetingId());
             } else {
                 jdbcTemplate.update(getSqlForDeleteMeeting(COL_MEETING_ID), meeting.getMeetingId());
+                tMeeting = null;
             }
         }
+        return tMeeting;
     }
 
     @Override

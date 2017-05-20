@@ -11,11 +11,11 @@ public class SessionListener implements HttpSessionListener{
 
     @Override
     public void sessionCreated(HttpSessionEvent httpSessionEvent) {
-
+        sessionContext.addSession(httpSessionEvent.getSession());
     }
 
     @Override
     public void sessionDestroyed(HttpSessionEvent httpSessionEvent) {
-
+        sessionContext.delSession(httpSessionEvent.getSession());
     }
 }

@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.whiteboard.server.model.User;
+import org.whiteboard.server.service.MeetingService;
 import org.whiteboard.server.service.UserService;
 import org.whiteboard.server.session.SessionContext;
 
@@ -22,6 +23,9 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private MeetingService meetingService;
+
     @RequestMapping(value = "/login", method = RequestMethod.POST)
     @ResponseBody
     public Map<String, String> login(HttpServletRequest request, HttpSession session) {
@@ -33,14 +37,32 @@ public class UserController {
             session.setAttribute(SessionContext.ATTR_USER_ID,
                     String.valueOf(user.getUserId()));
             userService.sessionHandlerByCacheMap(session);
+            if (meetingService.enterMeeting(user.getUserId())) {
+                int roomId = meetingService.getRoomIdByUserId(user.getUserId());
+                session.setAttribute(SessionContext.ATTR_ROOM_ID, String.valueOf(roomId));
+                map.put("roomId", String.valueOf(roomId));
+            }
             map.put("code", "100");
             map.put("message", "登录成功");
             map.put("user_info", user.toJSONString());
+            map.put("roomId", "0");
         } else {
             map.put("code", "201");
             map.put("message", "手机号或密码错误");
             map.put("user_info", "");
         }
+        return map;
+    }
+
+    @RequestMapping(value = "/logout", method = RequestMethod.POST)
+    @ResponseBody
+    public Map<String, String> logout(HttpServletRequest request, HttpSession session) {
+        Map<String, String> map = new HashMap<>();
+        long userId = Long.parseLong(request.getParameter("user_id"));
+        userService.logout(userService.getUserById(userId));
+        session.invalidate();
+        map.put("code", "100");
+        map.put("message", "注销成功");
         return map;
     }
 

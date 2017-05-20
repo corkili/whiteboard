@@ -2,6 +2,7 @@ package org.whiteboard.server.dao;
 
 import org.whiteboard.server.model.Meeting;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -23,11 +24,12 @@ public interface MeetingDao {
 
     // 查询
     public Meeting findMeetingById(long meetingId);
+    public Meeting findMeetingByOrganizerAndStartTime(long organizerId, Date startTime);
     public List<Long> findMeetingIdsByUserId(long userId);
     public List<Long> findUserIdsByMeetingId(long meetingId);
 
     // 添加
-    public void addMeetingToDB(Meeting meeting);
+    public Meeting addMeetingToDB(Meeting meeting);
 
     // 更新
     public void updateMeeting(Meeting meeting);
