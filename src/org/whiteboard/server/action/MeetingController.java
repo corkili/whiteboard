@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.whiteboard.server.model.Meeting;
 import org.whiteboard.server.service.MeetingService;
+import org.whiteboard.server.service.WhiteboardService;
 import org.whiteboard.server.session.SessionContext;
 
 import javax.servlet.http.HttpServletRequest;
@@ -25,12 +26,15 @@ public class MeetingController {
     @Autowired
     private MeetingService meetingService;
 
-    @RequestMapping(value = "/init_meeting", method = RequestMethod.POST)
+    @Autowired
+    private WhiteboardService whiteboardService;
+
+    @RequestMapping(value = "/init_meeting", method = {RequestMethod.POST, RequestMethod.GET})
     @ResponseBody
-    public Map<String, String> initMeeting(HttpServletRequest request, HttpSession session) {
-        Map<String, String> map = new HashMap<>();
+    public Map<String, Object> initMeeting(HttpServletRequest request, HttpSession session) {
+        Map<String, Object> map = new HashMap<>();
         String meetingName = request.getParameter("meeting_name");
-        long organizerId = Long.parseLong(request.getParameter("organizer_id"));
+        long organizerId = Long.parseLong(session.getAttribute(SessionContext.ATTR_USER_ID).toString());
         int maxPartnerNumber = Integer.parseInt(request.getParameter("max_partner_number"));
         String roomPassword = request.getParameter("room_password");
         if (organizerId != Long.parseLong(session.getAttribute(SessionContext.ATTR_USER_ID).toString())) {
@@ -43,7 +47,7 @@ public class MeetingController {
                 session.setAttribute(SessionContext.ATTR_ROOM_ID, meeting.getMeetingRoomId());
                 map.put("code", "100");
                 map.put("message", "创建成功");
-                map.put("meeting_info", meetingService.getMeetingJSONString(meeting));
+                map.put("meeting_info", meetingService.getMeetingJSON(meeting));
             } else {
                 map.put("code", "205");
                 map.put("message", "创建失败，初始化错误，请重试!");
@@ -55,8 +59,8 @@ public class MeetingController {
 
     @RequestMapping(value = "/join_meeting", method = RequestMethod.POST)
     @ResponseBody
-    public Map<String, String> joinMeeting(HttpServletRequest request, HttpSession session) {
-        Map<String, String> map = new HashMap<>();
+    public Map<String, Object> joinMeeting(HttpServletRequest request, HttpSession session) {
+        Map<String, Object> map = new HashMap<>();
         int roomId = Integer.parseInt(request.getParameter("room_id"));
         String roomPassword = request.getParameter("room_password");
         long userId = Long.parseLong(session.getAttribute(SessionContext.ATTR_USER_ID).toString());
@@ -69,7 +73,7 @@ public class MeetingController {
             map.put("message", "成功加入会议");
             Meeting meeting = meetingService.getRunningMeetingByUserId(userId);
             session.setAttribute(SessionContext.ATTR_ROOM_ID, meeting.getMeetingRoomId());
-            map.put("meeting_info", meetingService.getMeetingJSONString(meeting));
+            map.put("meeting_info", meetingService.getMeetingJSON(meeting));
         }
         return map;
     }
@@ -93,8 +97,8 @@ public class MeetingController {
 
     @RequestMapping(value = "/enter_meeting", method = RequestMethod.POST)
     @ResponseBody
-    public Map<String, String> enterMeeting(HttpSession session) {
-        Map<String, String> map = new HashMap<>();
+    public Map<String, Object> enterMeeting(HttpSession session) {
+        Map<String, Object> map = new HashMap<>();
         long userId = Long.parseLong(session.getAttribute(SessionContext.ATTR_USER_ID).toString());
         if (meetingService.enterMeeting(userId)) {
             map.put("code", "100");
@@ -102,7 +106,7 @@ public class MeetingController {
             Meeting meeting = meetingService.getRunningMeetingByUserId(userId);
             session.removeAttribute(SessionContext.ATTR_ROOM_ID);
             session.setAttribute(SessionContext.ATTR_ROOM_ID, meeting.getMeetingRoomId());
-            map.put("meeting_info", meetingService.getMeetingJSONString(meeting));
+            map.put("meeting_info", meetingService.getMeetingJSON(meeting));
         } else {
             map.put("code", "208");
             map.put("message", "进入会议失败");
@@ -129,28 +133,30 @@ public class MeetingController {
 
     @RequestMapping(value = "/start_meeting", method = RequestMethod.POST)
     @ResponseBody
-    public Map<String, String> startMeeting(HttpSession session) {
-        Map<String, String> map = new HashMap<>();
+    public Map<String, Object> startMeeting(HttpSession session) {
+        Map<String, Object> map = new HashMap<>();
         int roomId = Integer.parseInt(session.getAttribute(SessionContext.ATTR_ROOM_ID).toString());
         meetingService.startMeeting(roomId);
         // 通知各客户端会议开始
         map.put("code", "100");
         map.put("message", "会议开始");
         Meeting meeting = meetingService.getRunningMeetingByRoomId(roomId);
-        map.put("meeting_info", meetingService.getMeetingJSONString(meeting));
+        map.put("meeting_info", meetingService.getMeetingJSON(meeting));
         return map;
     }
 
     @RequestMapping(value = "/stop_meeting", method = RequestMethod.POST)
     @ResponseBody
-    public Map<String, String> stopMeeting(HttpSession session) {
-        Map<String, String> map = new HashMap<>();
+    public Map<String, Object> stopMeeting(HttpSession session) {
+        Map<String, Object> map = new HashMap<>();
         int roomId = Integer.parseInt(session.getAttribute(SessionContext.ATTR_ROOM_ID).toString());
         Meeting meeting = meetingService.finishAndSaveMeeting(roomId);
         if (meeting != null) {
             map.put("code", "100");
             map.put("message", "会议结束，相关信息保存成功");
-            map.put("meeting_info", meetingService.getMeetingJSONString(meeting));
+            map.put("meeting_info", meetingService.getMeetingJSON(meeting));
+            whiteboardService.setMeetingId(meeting.getMeetingId(), roomId);
+            whiteboardService.saveWhiteboards(roomId);
             session.removeAttribute(SessionContext.ATTR_ROOM_ID);
         } else {
             map.put("code", "210");
@@ -162,8 +168,8 @@ public class MeetingController {
 
     @RequestMapping(value = "/get_my_meetings", method = RequestMethod.POST)
     @ResponseBody
-    public Map<String, String> getMyMeetings(HttpSession session) {
-        Map<String, String> map = new HashMap<>();
+    public Map<String, Object> getMyMeetings(HttpSession session) {
+        Map<String, Object> map = new HashMap<>();
         long userId = Long.parseLong(session.getAttribute(SessionContext.ATTR_USER_ID).toString());
         List<Meeting> meetings = meetingService.getMeetingsByUserId(userId);
         map.put("code", "100");
@@ -171,9 +177,9 @@ public class MeetingController {
         map.put("meeting_number", String.valueOf(meetings.size()));
         JSONArray jsonArray = new JSONArray();
         for (Meeting meeting : meetings) {
-            jsonArray.add(meetingService.getMeetingJSONString(meeting));
+            jsonArray.add(meetingService.getMeetingJSON(meeting));
         }
-        map.put("meeting_list", jsonArray.toString());
+        map.put("meeting_list", jsonArray);
         return map;
     }
 

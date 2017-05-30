@@ -1,5 +1,6 @@
 package org.whiteboard.server.session;
 
+import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 import org.whiteboard.server.model.User;
@@ -13,6 +14,9 @@ import javax.servlet.http.HttpSession;
  */
 @Component("SpringMVCInterceptor")
 public class SessionInterceptor extends HandlerInterceptorAdapter {
+
+    Logger logger = Logger.getLogger(SessionInterceptor.class);
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
             throws Exception {
@@ -22,7 +26,7 @@ public class SessionInterceptor extends HandlerInterceptorAdapter {
         HttpSession session = request.getSession();
 
         // 过滤登录、退出访问
-        String[] noFilters = new String[] { "/user/login", "/user/logout", "/user/register" };
+        String[] noFilters = new String[] { "/user" };
 
         String uri = request.getRequestURI();
 
@@ -30,14 +34,17 @@ public class SessionInterceptor extends HandlerInterceptorAdapter {
 
         for (String s : noFilters) {
             if(uri.contains(s)){
+                logger.info("true");
                 return true;
             }
         }
 
         if(userId == null) {
+            logger.info("false");
             return false;
         }
 
+        logger.info("true");
         return true;
     }
 }

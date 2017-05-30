@@ -1,5 +1,6 @@
 package org.whiteboard.server.action;
 
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -26,12 +27,18 @@ public class UserController {
     @Autowired
     private MeetingService meetingService;
 
-    @RequestMapping(value = "/login", method = RequestMethod.POST)
+    private Logger logger = Logger.getLogger(UserController.class);
+
+    @RequestMapping(value = "/login", method = { RequestMethod.POST, RequestMethod.GET })
     @ResponseBody
-    public Map<String, String> login(HttpServletRequest request, HttpSession session) {
-        Map<String, String> map = new HashMap<>();
+    public Map<String, Object> login(HttpServletRequest request, HttpSession session) {
+        Map<String, Object> map = new HashMap<>();
         String phoneNumber = request.getParameter("phone_number");
         String password = request.getParameter("password");
+
+        logger.info(phoneNumber);
+        logger.info(password);
+        
         if(userService.loginIfPhoneAndPasswordIsCorrect(phoneNumber, password)) {
             User user = userService.getUserByPhone(phoneNumber);
             session.setAttribute(SessionContext.ATTR_USER_ID,
@@ -41,11 +48,13 @@ public class UserController {
                 int roomId = meetingService.getRoomIdByUserId(user.getUserId());
                 session.setAttribute(SessionContext.ATTR_ROOM_ID, String.valueOf(roomId));
                 map.put("roomId", String.valueOf(roomId));
+            } else {
+                map.put("roomId", "0");
             }
             map.put("code", "100");
             map.put("message", "登录成功");
             map.put("user_info", user.toJSONString());
-            map.put("roomId", "0");
+
         } else {
             map.put("code", "201");
             map.put("message", "手机号或密码错误");
@@ -56,8 +65,8 @@ public class UserController {
 
     @RequestMapping(value = "/logout", method = RequestMethod.POST)
     @ResponseBody
-    public Map<String, String> logout(HttpServletRequest request, HttpSession session) {
-        Map<String, String> map = new HashMap<>();
+    public Map<String, Object> logout(HttpServletRequest request, HttpSession session) {
+        Map<String, Object> map = new HashMap<>();
         long userId = Long.parseLong(request.getParameter("user_id"));
         userService.logout(userService.getUserById(userId));
         session.invalidate();
@@ -68,14 +77,14 @@ public class UserController {
 
     @RequestMapping(value = "/register", method = RequestMethod.POST)
     @ResponseBody
-    public Map<String, String> register(HttpServletRequest request) {
-        Map<String, String> map = new HashMap<>();
+    public Map<String, Object> register(HttpServletRequest request) {
+        Map<String, Object> map = new HashMap<>();
         String username = request.getParameter("username");
         String password = request.getParameter("password");
         String phoneNumber = request.getParameter("phone_number");
         // register
         User user = new User(UserService.DEFAULT_USER_ID, username, password, phoneNumber,
-                UserService.DEFAULT_AUTHORITY, UserService.DEFAULT_HEAD_IMAGE);
+                UserService.DEFAULT_AUTHORITY, UserService.DEFAULT_HEAD_IMAGE); 
         if (userService.addUserIfNotExist(user)) {
             map.put("code", "100");
             map.put("message", "注册成功！");
@@ -142,11 +151,12 @@ public class UserController {
         return map;
     }
 
-    @RequestMapping(value = "/valid_phone", method = RequestMethod.POST)
+    @RequestMapping(value = "/valid_phone", method = {RequestMethod.POST, RequestMethod.GET})
     @ResponseBody
-    public Map<String, String> validPhoneNumber(HttpServletRequest request) {
-        Map<String, String> map = new HashMap<>();
+    public Map<String, Object> validPhoneNumber(HttpServletRequest request) {
+        Map<String, Object> map = new HashMap<>();
         String phoneNumber = request.getParameter("phone_number");
+        logger.info("phone:" + phoneNumber);
         // modify
         User user = userService.getUserByPhone(phoneNumber);
         if (user != null) {

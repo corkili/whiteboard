@@ -12,7 +12,11 @@
       </configuration>
     </facet>
     <facet type="Spring" name="Spring">
-      <configuration />
+      <configuration>
+        <fileset id="fileset" name="Spring Application Context" removed="false">
+          <file>file://$MODULE_DIR$/web/WEB-INF/springmvc-config.xml</file>
+        </fileset>
+      </configuration>
     </facet>
   </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
@@ -30,5 +34,6 @@
     <orderEntry type="library" exported="" name="tomcat-8.0.32" level="application" />
     <orderEntry type="library" exported="" name="jackson-2.8.2" level="application" />
     <orderEntry type="library" exported="" name="json" level="application" />
+    <orderEntry type="library" exported="" name="spring-rabbit" level="application" />
   </component>
 </module>

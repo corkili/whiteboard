@@ -11,6 +11,7 @@ import javax.servlet.http.HttpSession;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by 李浩然 on 2017/5/15.
@@ -20,7 +21,7 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private UserDao userDao;
 
-    private Map<Long, User> loginedUsers = new HashMap<>();
+    private Map<Long, User> loginedUsers = new ConcurrentHashMap<>();
 
     @Override
     public boolean addUserIfNotExist(User user) {

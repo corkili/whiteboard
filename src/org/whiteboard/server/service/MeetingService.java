@@ -1,5 +1,6 @@
 package org.whiteboard.server.service;
 
+import net.sf.json.JSONObject;
 import org.whiteboard.server.model.Meeting;
 
 import java.util.List;
@@ -27,7 +28,7 @@ public interface MeetingService {
 
     public int getRoomIdByUserId(long userId);
     public Meeting getRunningMeetingByUserId(long userId);
-    public String getMeetingJSONString(Meeting meeting);
+    public JSONObject getMeetingJSON(Meeting meeting);
     public Meeting getRunningMeetingByRoomId(int roomId);
 
     public Meeting getMeetingById(long meetingId);

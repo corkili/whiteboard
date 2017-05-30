@@ -44,7 +44,7 @@ public class SessionContext {
     public synchronized HttpSession getSession(String sessionId) {
         if(sessionId == null)
             return null;
-        return (HttpSession) sessionMap.get(sessionId);
+        return sessionMap.get(sessionId);
     }
 
     public Map getSessionMap() {

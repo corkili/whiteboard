@@ -20,6 +20,7 @@ public interface WhiteboardDao {
 
     // 添加
     public Whiteboard addBoardToDB(Whiteboard whiteboard);
+    public boolean addBoardsToDB(List<Whiteboard> whiteboards);
 
     // 更新
     public Whiteboard updateBoard(Whiteboard whiteboard);

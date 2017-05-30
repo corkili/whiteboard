@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:p="http://www.springframework.org/schema/p"
        xmlns:mvc="http://www.springframework.org/schema/mvc"
        xmlns:context="http://www.springframework.org/schema/context"
        xsi:schemaLocation="
@@ -15,14 +14,14 @@
     <context:component-scan base-package="org.whiteboard.server.action"/>
     <context:component-scan base-package="org.whiteboard.server.service"/>
     <context:component-scan base-package="org.whiteboard.server.dao" />
-    <context:property-placeholder location="classpath:*.properties" file-encoding="UTF-8" />
+    <context:property-placeholder location="classpath:jdbc.properties" file-encoding="UTF-8" />
 
     <mvc:annotation-driven conversion-service="conversionService"/>
 
     <mvc:interceptors>
         <mvc:interceptor>
             <mvc:mapping path="/**"/>
-            <bean id="SessionInterceptor" class="org.whiteboard.server.session.SessionInterceptor"></bean>
+            <bean id="SessionInterceptor" class="org.whiteboard.server.session.SessionInterceptor"/>
         </mvc:interceptor>
     </mvc:interceptors>
 
@@ -75,5 +74,7 @@
             </set>
         </property>
     </bean>
+
+    <bean name="messageContainer" class="org.whiteboard.server.polling.MessageContainer"/>
 
 </beans>

@@ -86,12 +86,11 @@ public class User {
         this.headImage = headImage;
     }
 
-    public String toJSONString() {
+    public JSONObject toJSONString() {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("user_id", userId);
         jsonObject.put("username", username);
-        jsonObject.put("password", password);
         jsonObject.put("phone_number", phoneNumber);
-        return jsonObject.toString();
+        return jsonObject;
     }
 }

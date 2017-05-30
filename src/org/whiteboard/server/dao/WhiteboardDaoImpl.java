@@ -63,6 +63,21 @@ public class WhiteboardDaoImpl implements WhiteboardDao {
     }
 
     @Override
+    public boolean addBoardsToDB(List<Whiteboard> whiteboards) {
+        try {
+            List<Object[]> params = new ArrayList<>();
+            for(Whiteboard whiteboard : whiteboards) {
+                params.add(getParamsForInsertBoard(whiteboard));
+            }
+            jdbcTemplate.batchUpdate(getSqlForInsertBoard(), params);
+            return true;
+        } catch (Exception e) {
+            // do nothing
+        }
+        return false;
+    }
+
+    @Override
     public Whiteboard updateBoard(Whiteboard whiteboard) {
         try {
             int count = jdbcTemplate.update(getSqlForUpdateBoard(), getParamsForUpdateBoard(whiteboard));

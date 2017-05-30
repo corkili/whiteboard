@@ -87,15 +87,16 @@ public class MeetingServiceImpl implements MeetingService {
     }
 
     @Override
-    public String getMeetingJSONString(Meeting meeting) {
+    public JSONObject getMeetingJSON(Meeting meeting) {
         if (meeting == null){
-            return "";
+            return new JSONObject();
         }
 
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("meeting_id", meeting.getMeetingId());
+        jsonObject.put("meeting_name", meeting.getMeetingName());
         jsonObject.put("partner_number", meeting.getPartnerNumber());
-        jsonObject.put("organizer_id", meeting.getOrganizerId());
+        jsonObject.put("organizer", userDao.findUserByIdFromDB(meeting.getOrganizerId()).getUsername());
         jsonObject.put("start_time", meeting.getStartTime());
         jsonObject.put("end_time", meeting.getEndTime());
         jsonObject.put("room_id", meeting.getMeetingRoomId());
@@ -107,7 +108,8 @@ public class MeetingServiceImpl implements MeetingService {
             tmp.put("username", userDao.findUserByIdFromDB(partnerId).getUsername());
             jsonArray.add(tmp);
         }
-        return jsonObject.toString();
+        jsonObject.put("partners", jsonArray);
+        return jsonObject;
     }
 
     @Override

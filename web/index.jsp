@@ -10,9 +10,9 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>$Title$</title>
+    <title>Whiteboard</title>
   </head>
   <body>
-  $END$
+  Whiteboard Server running!
   </body>
 </html>

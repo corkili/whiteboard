@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by 李浩然 on 2017/5/21.
@@ -17,15 +18,15 @@ public class MeetingManager {
         return Instance;
     }
 
-    private Map<Integer, Meeting> runningMeetings;
-    private Map<Long, Integer> participating;
-    private Map<Long, Boolean> inRoom;
-    private List<Integer> roomIds;
+    private Map<Integer, Meeting> runningMeetings;  // <roomId, Meeting>
+    private Map<Long, Integer> participating;       // <userId, roomId>
+    private Map<Long, Boolean> inRoom;              // <userId, Boolean>
+    private List<Integer> roomIds;                  // <roomId>
 
     private MeetingManager() {
-        runningMeetings = new HashMap<>();
-        participating = new HashMap<>();
-        inRoom = new HashMap<>();
+        runningMeetings = new ConcurrentHashMap<>();
+        participating = new ConcurrentHashMap<>();
+        inRoom = new ConcurrentHashMap<>();
         roomIds = new ArrayList<>();
     }
 
@@ -118,7 +119,7 @@ public class MeetingManager {
     }
 
     public int generateRoomId() {
-        int roomId = 0;
+        int roomId;
         do {
             roomId = (int)((Math.random() * 9 + 1) * 100000);
         } while (isExistRoomId(roomId));
