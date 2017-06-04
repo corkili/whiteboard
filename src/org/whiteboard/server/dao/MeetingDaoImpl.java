@@ -6,7 +6,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import org.whiteboard.server.model.Meeting;
+import org.whiteboard.server.model.Part;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -68,57 +72,68 @@ public class MeetingDaoImpl implements MeetingDao {
 
     @Override
     public List<Long> findMeetingIdsByUserId(long userId) {
-        List<Long> meetingIds = null;
-        String sql = getSqlForSelectMeetingIds(UserDao.COL_USER_ID);
+        List<Part> parts = null;
+        List<Long> meetingIds = new ArrayList<>();
+        String sql = "SELECT * FROM " + TABLE_PARTICIPATE + " WHERE " + UserDao.COL_USER_ID + "=?";
         try {
-            RowMapper<Long> rowMapper = BeanPropertyRowMapper.newInstance(Long.class);
-            meetingIds = jdbcTemplate.query(sql, new Object[]{ userId }, rowMapper);
+            RowMapper<Part> rowMapper = BeanPropertyRowMapper.newInstance(Part.class);
+            parts = jdbcTemplate.query(sql, new Object[]{ userId }, rowMapper);
         } catch (Exception e) {
             // do nothing
         }
-        if(meetingIds == null) {
-            meetingIds = new ArrayList<>();
+        if (parts != null) {
+            for (Part part : parts) {
+                meetingIds.add(part.getMeetingId());
+            }
         }
         return meetingIds;
     }
 
     @Override
     public List<Long> findUserIdsByMeetingId(long meetingId) {
-        List<Long> userIds = null;
-        String sql = getSqlForSelectUserIds(COL_MEETING_ID);
+        List<Long> userIds = new ArrayList<>();
+        List<Part> parts = null;
+        String sql = "SELECT * FROM " + TABLE_PARTICIPATE + " WHERE " + COL_MEETING_ID + "=?";
         try {
-            RowMapper<Long> rowMapper = BeanPropertyRowMapper.newInstance(Long.class);
-            userIds = jdbcTemplate.query(sql, new Object[]{ meetingId }, rowMapper);
+            RowMapper<Part> rowMapper = BeanPropertyRowMapper.newInstance(Part.class);
+            parts = jdbcTemplate.query(sql, new Object[]{ meetingId }, rowMapper);
         } catch (Exception e) {
-            // do nothing
+            // e.printStackTrace();
         }
-        if(userIds == null) {
-            userIds = new ArrayList<>();
+
+        if (parts != null) {
+            for (Part part : parts) {
+                userIds.add(part.getUserId());
+            }
         }
         return userIds;
     }
 
+
     @Override
     public Meeting addMeetingToDB(Meeting meeting) {
         Meeting tMeeting = null;
-        if(jdbcTemplate.update(getSqlForInsertMeeting(),
-                getParamsForInsertMeeting(meeting)) == 1) {
-            tMeeting = jdbcTemplate.queryForObject(getSqlForSelectMeeting(COL_ORGANIZER_ID, COL_START_TIME),
-                    new Object[]{ meeting.getOrganizerId(), dateFormat.format(meeting.getStartTime()) },
-                    BeanPropertyRowMapper.newInstance(Meeting.class));
-            List<Object[]> batchArgs = new ArrayList<>();
-            List<Long> partnerIds = meeting.getPartnerIds();
-            for (long userId : partnerIds) {
-                batchArgs.add(new Object[] { userId, meeting.getMeetingId() });
-            }
-            if (batchArgs.size() == meeting.getPartnerNumber()) {
-                jdbcTemplate.batchUpdate(getSqlForInsertParticipate(), batchArgs);
-                tMeeting = findMeetingById(tMeeting.getMeetingId());
-            } else {
-                jdbcTemplate.update(getSqlForDeleteMeeting(COL_MEETING_ID), meeting.getMeetingId());
-                tMeeting = null;
+        System.out.println("sql: " + getSqlForInsertMeeting());
+        jdbcTemplate.update(getSqlForInsertMeeting(), getParamsForInsertMeeting(meeting));
+        RowMapper<Meeting> rowMapper = BeanPropertyRowMapper.newInstance(Meeting.class);
+        List<Meeting> meetings  = jdbcTemplate.query(getSqlForSelectMeeting(COL_ORGANIZER_ID),
+                new Object[] { meeting.getOrganizerId() }, rowMapper);
+        tMeeting = meetings.get(0);
+        for (Meeting m : meetings) {
+            if (tMeeting.getMeetingId() < m.getMeetingId()) {
+                tMeeting = m;
             }
         }
+        System.out.println(meetings.size() + " " + tMeeting.getMeetingId());
+        List<Long> partnerIds = meeting.getPartnerIds();
+        String sql = getSqlForInsertParticipate();
+        System.out.println(getSqlForInsertParticipate());
+        for (long userId : partnerIds) {
+            jdbcTemplate.update(sql, userId, tMeeting.getMeetingId());
+        }
+        tMeeting = findMeetingById(tMeeting.getMeetingId());
+//        jdbcTemplate.update(getSqlForDeleteMeeting(COL_MEETING_ID), meeting.getMeetingId());
+//        tMeeting = null;
         return tMeeting;
     }
 
@@ -179,7 +194,7 @@ public class MeetingDaoImpl implements MeetingDao {
     private Object[] getParamsForInsertMeeting(Meeting meeting) {
         return new Object[] { meeting.getMeetingName(), meeting.getPartnerNumber(),
                 meeting.getOrganizerId(), meeting.getStartTime(), meeting.getEndTime(),
-                meeting.getNotePath() + meeting.getMeetingRoomId() };
+                meeting.getNotePath(), meeting.getMeetingRoomId() };
     }
 
     private String getSqlForInsertParticipate() {

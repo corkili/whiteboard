@@ -74,7 +74,4 @@
             </set>
         </property>
     </bean>
-
-    <bean name="messageContainer" class="org.whiteboard.server.polling.MessageContainer"/>
-
 </beans>

@@ -65,9 +65,9 @@ public class UserController {
 
     @RequestMapping(value = "/logout", method = RequestMethod.POST)
     @ResponseBody
-    public Map<String, Object> logout(HttpServletRequest request, HttpSession session) {
+    public Map<String, Object> logout(HttpSession session) {
         Map<String, Object> map = new HashMap<>();
-        long userId = Long.parseLong(request.getParameter("user_id"));
+        long userId = Long.parseLong(session.getAttribute(SessionContext.ATTR_USER_ID).toString());
         userService.logout(userService.getUserById(userId));
         session.invalidate();
         map.put("code", "100");

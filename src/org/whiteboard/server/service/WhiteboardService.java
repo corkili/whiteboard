@@ -15,5 +15,6 @@ public interface WhiteboardService {
 
     public String getWhiteboardInfo(int roomId);
     public void setMeetingId(long meetingId, int roomId);
+    public List<Whiteboard> getWhiteboardsByMeetingId(long meetingId);
 
 }

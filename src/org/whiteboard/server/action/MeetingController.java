@@ -1,13 +1,17 @@
 package org.whiteboard.server.action;
 
 import net.sf.json.JSONArray;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.whiteboard.server.model.Meeting;
+import org.whiteboard.server.model.Whiteboard;
 import org.whiteboard.server.service.MeetingService;
+import org.whiteboard.server.service.WhiteboardManager;
 import org.whiteboard.server.service.WhiteboardService;
 import org.whiteboard.server.session.SessionContext;
 
@@ -29,6 +33,8 @@ public class MeetingController {
     @Autowired
     private WhiteboardService whiteboardService;
 
+    private Logger logger = Logger.getLogger(MeetingController.class);
+
     @RequestMapping(value = "/init_meeting", method = {RequestMethod.POST, RequestMethod.GET})
     @ResponseBody
     public Map<String, Object> initMeeting(HttpServletRequest request, HttpSession session) {
@@ -45,6 +51,7 @@ public class MeetingController {
             Meeting meeting = meetingService.initMeeting(meetingName, organizerId, maxPartnerNumber, roomPassword);
             if (meeting != null) {
                 session.setAttribute(SessionContext.ATTR_ROOM_ID, meeting.getMeetingRoomId());
+                //meetingService.startMeeting(meeting.getMeetingRoomId());
                 map.put("code", "100");
                 map.put("message", "创建成功");
                 map.put("meeting_info", meetingService.getMeetingJSON(meeting));
@@ -81,6 +88,7 @@ public class MeetingController {
     @RequestMapping(value = "/quit_meeting", method = RequestMethod.POST)
     @ResponseBody
     public Map<String, String> quitMeeting(HttpSession session) {
+        logger.info("quit_meeting...");
         Map<String, String> map = new HashMap<>();
         long userId = Long.parseLong(session.getAttribute(SessionContext.ATTR_USER_ID).toString());
         int roomId = Integer.parseInt(session.getAttribute(SessionContext.ATTR_ROOM_ID).toString());
@@ -148,15 +156,21 @@ public class MeetingController {
     @RequestMapping(value = "/stop_meeting", method = RequestMethod.POST)
     @ResponseBody
     public Map<String, Object> stopMeeting(HttpSession session) {
+        logger.info("stop_meeting...");
         Map<String, Object> map = new HashMap<>();
         int roomId = Integer.parseInt(session.getAttribute(SessionContext.ATTR_ROOM_ID).toString());
+        String whiteboardName = meetingService.getRunningMeetingByRoomId(roomId).getMeetingName() + "_"
+                + String.valueOf(WhiteboardManager.getInstance().getWhiteboardNumber(roomId));
+        String content = whiteboardService.getWhiteboardInfo(roomId);
+        whiteboardService.addWhiteboard(roomId, new Whiteboard(-1L, content, -1L, whiteboardName));
         Meeting meeting = meetingService.finishAndSaveMeeting(roomId);
+        logger.info("meeting != null : " + (meeting != null));
         if (meeting != null) {
             map.put("code", "100");
             map.put("message", "会议结束，相关信息保存成功");
             map.put("meeting_info", meetingService.getMeetingJSON(meeting));
-            whiteboardService.setMeetingId(meeting.getMeetingId(), roomId);
-            whiteboardService.saveWhiteboards(roomId);
+//            whiteboardService.setMeetingId(meeting.getMeetingId(), roomId);
+//            whiteboardService.saveWhiteboards(roomId);
             session.removeAttribute(SessionContext.ATTR_ROOM_ID);
         } else {
             map.put("code", "210");
@@ -171,10 +185,13 @@ public class MeetingController {
     public Map<String, Object> getMyMeetings(HttpSession session) {
         Map<String, Object> map = new HashMap<>();
         long userId = Long.parseLong(session.getAttribute(SessionContext.ATTR_USER_ID).toString());
+        logger.info("get_my_meetings");
+        logger.info("userId: " + userId);
         List<Meeting> meetings = meetingService.getMeetingsByUserId(userId);
+        logger.info("meetings.size: " + meetings.size());
         map.put("code", "100");
         map.put("message", "获取会议记录成功");
-        map.put("meeting_number", String.valueOf(meetings.size()));
+        map.put("meeting_number", meetings.size());
         JSONArray jsonArray = new JSONArray();
         for (Meeting meeting : meetings) {
             jsonArray.add(meetingService.getMeetingJSON(meeting));

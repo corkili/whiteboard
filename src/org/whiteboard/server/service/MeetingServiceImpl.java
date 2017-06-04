@@ -1,13 +1,17 @@
 package org.whiteboard.server.service;
 
+import javafx.scene.input.DataFormat;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.SystemEnvironmentPropertySource;
 import org.springframework.stereotype.Service;
 import org.whiteboard.server.dao.MeetingDao;
 import org.whiteboard.server.dao.UserDao;
 import org.whiteboard.server.model.Meeting;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -22,6 +26,13 @@ public class MeetingServiceImpl implements MeetingService {
 
     @Autowired
     private UserDao userDao;
+
+    @Autowired
+    private WhiteboardService whiteboardService;
+
+    private Logger logger = Logger.getLogger(MeetingServiceImpl.class);
+
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     private MeetingManager meetingManager = MeetingManager.getInstance();
 
@@ -47,6 +58,11 @@ public class MeetingServiceImpl implements MeetingService {
         Meeting meeting = meetingManager.getMeeting(roomId);
         meeting.setEndTime(new Date());
         meeting = meetingDao.addMeetingToDB(meeting);
+        logger.info("result: " + meeting.getMeetingId());
+        whiteboardService.setMeetingId(meeting.getMeetingId(), roomId);
+        logger.info("save whiteboards....");
+        whiteboardService.saveWhiteboards(roomId);
+        logger.info("remove meeting...");
         meetingManager.removeMeeting(roomId);
         return meeting;
     }
@@ -97,8 +113,8 @@ public class MeetingServiceImpl implements MeetingService {
         jsonObject.put("meeting_name", meeting.getMeetingName());
         jsonObject.put("partner_number", meeting.getPartnerNumber());
         jsonObject.put("organizer", userDao.findUserByIdFromDB(meeting.getOrganizerId()).getUsername());
-        jsonObject.put("start_time", meeting.getStartTime());
-        jsonObject.put("end_time", meeting.getEndTime());
+        jsonObject.put("start_time", dateFormat.format(meeting.getStartTime()));
+        jsonObject.put("end_time", dateFormat.format(meeting.getEndTime()));
         jsonObject.put("room_id", meeting.getMeetingRoomId());
         jsonObject.put("status", meeting.isStarted());
 

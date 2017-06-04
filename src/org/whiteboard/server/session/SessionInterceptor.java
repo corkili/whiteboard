@@ -34,17 +34,17 @@ public class SessionInterceptor extends HandlerInterceptorAdapter {
 
         for (String s : noFilters) {
             if(uri.contains(s)){
-                logger.info("true");
+                //logger.info("true");
                 return true;
             }
         }
 
         if(userId == null) {
-            logger.info("false");
+            //logger.info("false");
             return false;
         }
 
-        logger.info("true");
+        //logger.info("true");
         return true;
     }
 }

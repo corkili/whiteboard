@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import org.whiteboard.server.dao.WhiteboardDao;
 import org.whiteboard.server.model.Whiteboard;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,7 +24,7 @@ public class WhiteboardServiceImpl implements WhiteboardService {
 
     public WhiteboardServiceImpl() {
         whiteboardManager = WhiteboardManager.getInstance();
-        whiteboardInfos = new ConcurrentHashMap<>();
+        whiteboardInfos = new HashMap<>();
     }
 
     @Override
@@ -37,13 +39,14 @@ public class WhiteboardServiceImpl implements WhiteboardService {
 
     @Override
     public void updateWhiteboardInfo(int roomId, String content) {
+        whiteboardInfos.remove(roomId);
         whiteboardInfos.put(roomId, content);
     }
 
     @Override
     public String getWhiteboardInfo(int roomId) {
         String content = whiteboardInfos.get(roomId);
-        if(content != null && "".equals(content.trim())) {
+        if(content != null) {
             return content;
         } else {
             return "";
@@ -53,5 +56,10 @@ public class WhiteboardServiceImpl implements WhiteboardService {
     @Override
     public void setMeetingId(long meetingId, int roomId) {
         whiteboardManager.setMeetingIdForWhiteboards(meetingId, roomId);
+    }
+
+    @Override
+    public List<Whiteboard> getWhiteboardsByMeetingId(long meetingId) {
+        return whiteboardDao.findBoardsByMeetingId(meetingId);
     }
 }

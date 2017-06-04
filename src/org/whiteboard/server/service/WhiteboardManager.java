@@ -47,8 +47,8 @@ public class WhiteboardManager {
 
     public void setMeetingIdForWhiteboards(long meetingId, int roomId) {
         List<Whiteboard> whiteboards = getWhiteboard(roomId);
-        for(int i = 0; i < whiteboards.size(); i++) {
-            whiteboards.get(i).setMeetingId(meetingId);
+        for (Whiteboard whiteboard : whiteboards) {
+            whiteboard.setMeetingId(meetingId);
         }
     }
 

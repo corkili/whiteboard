@@ -19,6 +19,8 @@ public class Whiteboard {
     @Column(name = "board_name")
     private String boardName;
 
+    public Whiteboard() {}
+
     public Whiteboard(long boardId, String boardContent, long meetingId, String boardName) {
         this.boardId = boardId;
         this.boardContent = boardContent;
